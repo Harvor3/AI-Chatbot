@@ -46,31 +46,33 @@ class DocumentQAAgent(BaseAgent):
         ])
         
         self.rag_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a specialized document Q&A assistant. You have been provided with relevant context from documents to answer the user's question.
+            ("system", """You are a specialized document Q&A assistant. You MUST ONLY use the provided context from documents to answer questions.
 
-            Instructions:
-            1. Use the provided context to answer the user's question accurately
-            2. Cite specific sources when referencing information
-            3. If the context doesn't fully answer the question, clearly state what's missing
-            4. Provide direct quotes when appropriate
-            5. Be concise but comprehensive in your response
+            STRICT INSTRUCTIONS:
+            1. ONLY use information from the provided context below - DO NOT use any external knowledge
+            2. If the context doesn't contain the answer, say "The provided documents don't contain information about this topic"
+            3. Always cite the specific source document and page when referencing information
+            4. Provide direct quotes from the context when possible
+            5. Be accurate and concise in your response
             
             Context from documents:
             {context}
             
-            Sources: {sources}"""),
+            Available sources: {sources}
+            
+            REMEMBER: Answer ONLY based on the context provided above. Do not use general knowledge."""),
             ("human", "Question: {question}")
         ])
     
-    async def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         try:
             tenant_id = context.get("tenant_id", "default") if context else "default"
             uploaded_files = context.get("uploaded_files", []) if context else []
             
             if self.rag_enabled and hasattr(self, 'rag_retriever'):
-                return await self._process_with_rag(message, context, tenant_id, uploaded_files)
+                return self._process_with_rag(message, context, tenant_id, uploaded_files)
             else:
-                return await self._process_without_rag(message, context, uploaded_files)
+                return self._process_without_rag(message, context, uploaded_files)
                 
         except Exception as e:
             return {
@@ -80,7 +82,7 @@ class DocumentQAAgent(BaseAgent):
                 "error": str(e)
             }
     
-    async def _process_with_rag(self, message: str, context: Dict[str, Any], 
+    def _process_with_rag(self, message: str, context: Dict[str, Any], 
                                tenant_id: str, uploaded_files: List[Dict]) -> Dict[str, Any]:
         try:
             newly_added = []
@@ -119,7 +121,7 @@ class DocumentQAAgent(BaseAgent):
                 
                 chain = self.rag_prompt | self.llm
                 
-                response = await chain.ainvoke({
+                response = chain.invoke({
                     "context": rag_context['context'],
                     "sources": sources_text,
                     "question": message
@@ -177,9 +179,9 @@ Try rephrasing your question or ask about topics covered in these documents."""
                 }
                 
         except Exception as e:
-            return await self._process_without_rag(message, context, uploaded_files)
+            return self._process_without_rag(message, context, uploaded_files)
     
-    async def _process_without_rag(self, message: str, context: Dict[str, Any], 
+    def _process_without_rag(self, message: str, context: Dict[str, Any], 
                                   uploaded_files: List[Dict]) -> Dict[str, Any]:
         if uploaded_files:
             files_info = []
@@ -204,7 +206,7 @@ Please analyze the provided documents and answer the user's query based on the c
             
             chain = self.prompt | self.llm
             
-            response = await chain.ainvoke({"message": enhanced_message})
+            response = chain.invoke({"message": enhanced_message})
             
             return {
                 "response": response.content if hasattr(response, 'content') else str(response),

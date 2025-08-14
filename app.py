@@ -1,5 +1,3 @@
-"""Streamlit UI for Multi-Agent Chatbot System."""
-
 import streamlit as st
 import asyncio
 import json
@@ -31,12 +29,14 @@ def initialize_session_state():
         st.session_state.messages = []
     if "controller" not in st.session_state:
         st.session_state.controller = load_controller()
+    if "processing" not in st.session_state:
+        st.session_state.processing = False
 
 def display_message(role: str, content: str):
     with st.chat_message(role):
         st.write(content)
 
-async def process_user_message_with_context(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
+def process_user_message_with_context(message: str, context: Dict[str, Any]) -> Dict[str, Any]:
     if st.session_state.controller is None:
         return {
             "response": "System not initialized. Please check your API keys.",
@@ -44,7 +44,28 @@ async def process_user_message_with_context(message: str, context: Dict[str, Any
             "confidence": 0.0
         }
     
-    return await st.session_state.controller.process_message(message, context)
+    if st.session_state.processing:
+        return {
+            "response": "Please wait for the current request to complete before sending another.",
+            "agent": "System",
+            "confidence": 0.0
+        }
+    
+    try:
+        st.session_state.processing = True
+        
+        result = st.session_state.controller.process_message(message, context)
+        return result
+        
+    except Exception as e:
+        return {
+            "response": f"I encountered an error processing your request: {str(e)}",
+            "agent": "Error Handler",
+            "confidence": 0.0,
+            "error": str(e)
+        }
+    finally:
+        st.session_state.processing = False
 
 def main():
     st.title("🤖 Multi-Agent RAG Chatbot")
@@ -81,10 +102,10 @@ def main():
             st.warning("⚠️ This system requires Google AI to function")
             st.info("Get your FREE API key from Google AI Studio:")
             st.code("""
-# Add to your .env file:
+Add to your .env file:
 GOOGLE_API_KEY=your_google_api_key_here
 
-# Get your free key at: https://aistudio.google.com/
+Get your free key at: https://aistudio.google.com/
             """)
         
         st.subheader("LangSmith Tracing")
@@ -186,7 +207,7 @@ GOOGLE_API_KEY=your_google_api_key_here
     
     st.divider()
     
-    st.header("📁 Document Upload")
+    st.subheader("📁 Document Upload")
     st.markdown("*Upload documents to enable the Document Q&A Agent with RAG capabilities*")
     
     uploaded_files = st.file_uploader(
@@ -197,7 +218,7 @@ GOOGLE_API_KEY=your_google_api_key_here
     )
     
     if uploaded_files:
-        st.subheader("📋 Uploaded Files")
+        st.markdown("**📋 Uploaded Files**")
         cols = st.columns(min(len(uploaded_files), 4))
         
         for i, file in enumerate(uploaded_files):
@@ -213,77 +234,20 @@ GOOGLE_API_KEY=your_google_api_key_here
                 st.write(f"{file_icon} **{file.name}**")
                 st.caption(f"{file.type} • {file.size:,} bytes")
     
-    st.header("💬 Chat")
-    
-    st.markdown("**Quick Start Examples:**")
-    
-    col_a, col_b, col_c, col_d = st.columns(4)
-    
-    with col_a:
-        if st.button("📄 Document Analysis", help="Try document Q&A"):
-            example_query = "What can you help me with for document analysis?"
-            st.session_state.example_query = example_query
-            
-    with col_b:
-        if st.button("🌐 API Help", help="Get API assistance"):
-            example_query = "Help me make a REST API call to get user data"
-            st.session_state.example_query = example_query
-            
-    with col_c:
-        if st.button("📊 Create Form", help="Generate a form"):
-            example_query = "Create a contact form with name, email, and message fields"
-            st.session_state.example_query = example_query
-            
-    with col_d:
-        if st.button("📈 Data Analysis", help="Analyze data"):
-            example_query = "How can you help me analyze data trends?"
-            st.session_state.example_query = example_query
-    
     st.divider()
+    
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.header("💬 Chat")
+    with col2:
+        if st.button("🗑️ Clear Chat", help="Clear all chat messages"):
+            st.session_state.messages = []
+            st.rerun()
     
     for message in st.session_state.messages:
         display_message(message["role"], message["content"])
     
-    # Handle example query buttons
-    if hasattr(st.session_state, 'example_query'):
-        prompt = st.session_state.example_query
-        del st.session_state.example_query
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        display_message("user", prompt)
-        
-        # Process the example query
-        with st.chat_message("assistant"):
-            with st.spinner("Processing your request..."):
-                context = {"tenant_id": tenant_id}
-                response = asyncio.run(process_user_message_with_context(prompt, context))
-            
-            st.write(response["response"])
-            
-            # Show which agent handled the response
-            agent_name = response.get('agent', 'Unknown')
-            confidence = response.get('confidence', 0)
-            
-            if confidence >= 0.8:
-                st.success(f"🎯 **Handled by**: {agent_name} (Confidence: {confidence:.2f})")
-            elif confidence >= 0.5:
-                st.info(f"🤖 **Handled by**: {agent_name} (Confidence: {confidence:.2f})")
-            else:
-                st.warning(f"🔄 **Handled by**: {agent_name} (Confidence: {confidence:.2f})")
-            
-            with st.expander("📊 Response Details", expanded=False):
-                col_a, col_b = st.columns(2)
-                with col_a:
-                    st.write(f"**Agent**: {agent_name}")
-                    st.write(f"**Confidence**: {confidence:.2f}")
-                    if "metadata" in response and "type" in response["metadata"]:
-                        st.write(f"**Type**: {response['metadata']['type']}")
-                with col_b:
-                    if "metadata" in response:
-                        st.write("**Metadata**:")
-                        st.json(response["metadata"])
-        
-        st.session_state.messages.append({"role": "assistant", "content": response["response"]})
-        st.rerun()
+    
     
     if prompt := st.chat_input("Ask about documents, APIs, forms, analytics, or anything else..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
@@ -324,11 +288,10 @@ GOOGLE_API_KEY=your_google_api_key_here
                             file_info["raw_content"] = b""
                         context["uploaded_files"].append(file_info)
                 
-                response = asyncio.run(process_user_message_with_context(prompt, context))
+                response = process_user_message_with_context(prompt, context)
             
             st.write(response["response"])
             
-            # Show which agent handled the response
             agent_name = response.get('agent', 'Unknown')
             confidence = response.get('confidence', 0)
             

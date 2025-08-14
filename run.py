@@ -1,5 +1,3 @@
-"""Quick start script for the Multi-Agent Chatbot System."""
-
 import os
 import sys
 import subprocess
@@ -7,7 +5,6 @@ from pathlib import Path
 
 
 def check_requirements():
-    """Check if requirements are installed."""
     try:
         import streamlit
         import langchain
@@ -27,7 +24,6 @@ def check_requirements():
 
 
 def check_env_file():
-    """Check if environment file exists."""
     env_file = Path(".env")
     if not env_file.exists():
         print("⚠️ .env file not found")
@@ -35,7 +31,6 @@ def check_env_file():
         
         template_file = Path("config.env.example")
         if template_file.exists():
-            # Copy template to .env
             with open(template_file, 'r') as src, open(env_file, 'w') as dst:
                 dst.write(src.read())
             print("✅ .env file created from template")
@@ -50,20 +45,16 @@ def check_env_file():
 
 
 def main():
-    """Main function to start the application."""
     print("🚀 Multi-Agent Chatbot System - Quick Start")
     print("=" * 50)
     
-    # Check requirements
     if not check_requirements():
         return
     
-    # Check environment file
     env_ready = check_env_file()
     
     if not env_ready:
         print("\n⚠️ Please configure your .env file with API keys before running the app")
-        print("Required: OPENAI_API_KEY or ANTHROPIC_API_KEY")
         return
     
     print("\n🎯 Starting Streamlit application...")
@@ -72,7 +63,6 @@ def main():
     print("-" * 50)
     
     try:
-        # Run Streamlit app
         subprocess.run([sys.executable, "-m", "streamlit", "run", "app.py"], check=True)
     except KeyboardInterrupt:
         print("\n👋 Application stopped by user")

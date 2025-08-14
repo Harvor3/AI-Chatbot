@@ -26,11 +26,11 @@ class AnalyticsAgent(BaseAgent):
             ("human", "{message}")
         ])
     
-    async def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         try:
             chain = self.prompt | self.llm
             
-            response = await chain.ainvoke({"message": message})
+            response = chain.invoke({"message": message})
             
             return {
                 "response": response.content if hasattr(response, 'content') else str(response),

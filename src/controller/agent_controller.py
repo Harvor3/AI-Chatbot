@@ -30,22 +30,26 @@ class AgentController:
         self.graph = self._build_graph()
     
     def _initialize_llm(self) -> BaseLanguageModel:
-        if config.GOOGLE_API_KEY:
-            return ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                google_api_key=config.GOOGLE_API_KEY,
-                temperature=0.7,
-                convert_system_message_to_human=True
-            )
-        elif config.GOOGLE_PROJECT_ID:
-            return ChatVertexAI(
-                model_name="gemini-1.5-flash",
-                project=config.GOOGLE_PROJECT_ID,
-                location=config.GOOGLE_LOCATION,
-                temperature=0.7
-            )
-        else:
-            raise ValueError("Google AI API key or Google Cloud Project ID must be provided")
+        try:
+            if config.GOOGLE_API_KEY:
+                return ChatGoogleGenerativeAI(
+                    model="gemini-1.5-flash",
+                    google_api_key=config.GOOGLE_API_KEY,
+                    temperature=0.7,
+                    streaming=False
+                )
+            elif config.GOOGLE_PROJECT_ID:
+                return ChatVertexAI(
+                    model_name="gemini-1.5-flash",
+                    project=config.GOOGLE_PROJECT_ID,
+                    location=config.GOOGLE_LOCATION,
+                    temperature=0.7,
+                    streaming=False
+                )
+            else:
+                raise ValueError("Google AI API key or Google Cloud Project ID must be provided")
+        except Exception as e:
+            raise RuntimeError(f"Failed to initialize LLM: {str(e)}")
     
     def _initialize_agents(self) -> List[BaseAgent]:
         return [
@@ -100,11 +104,19 @@ class AgentController:
     def _should_use_fallback(self, state: AgentState) -> bool:
         return state["confidence"] < 0.5 or state["selected_agent"] is None
     
-    async def _execute_selected_agent(self, state: AgentState) -> AgentState:
+    def _execute_selected_agent(self, state: AgentState) -> AgentState:
         selected_agent_name = state["selected_agent"]
         if selected_agent_name and selected_agent_name in self.agent_map:
             agent = self.agent_map[selected_agent_name]
-            result = await agent.process(state["message"], state["context"])
+            try:
+                result = agent.process(state["message"], state["context"])
+            except Exception as e:
+                result = {
+                    "response": f"Agent processing error: {str(e)}",
+                    "agent": selected_agent_name,
+                    "confidence": 0.0,
+                    "error": str(e)
+                }
         else:
             result = {
                 "response": "No suitable agent found to handle this request.",
@@ -117,7 +129,7 @@ class AgentController:
             "result": result
         }
     
-    async def _fallback_response(self, state: AgentState) -> AgentState:
+    def _fallback_response(self, state: AgentState) -> AgentState:
         try:
             from langchain.prompts import ChatPromptTemplate
             
@@ -129,7 +141,7 @@ class AgentController:
             ])
             
             chain = fallback_prompt | self.llm
-            response = await chain.ainvoke({"message": state["message"]})
+            response = chain.invoke({"message": state["message"]})
             
             result = {
                 "response": response.content if hasattr(response, 'content') else str(response),
@@ -153,7 +165,7 @@ class AgentController:
             "result": result
         }
     
-    async def process_message(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process_message(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if context is None:
             context = {}
         
@@ -166,7 +178,7 @@ class AgentController:
         }
         
         try:
-            final_state = await self.graph.ainvoke(initial_state)
+            final_state = self.graph.invoke(initial_state)
             return final_state["result"]
         except Exception as e:
             return {

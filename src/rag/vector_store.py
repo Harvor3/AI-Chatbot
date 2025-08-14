@@ -37,18 +37,24 @@ class VectorStore:
         
         self._load_indices()
     
-    def add_documents(self, chunks: List[DocumentChunk], tenant_id: str = "default") -> bool:
+    def add_documents(self, chunks: List[DocumentChunk], tenant_id: str = "default", replace_existing: bool = True, clear_all: bool = False) -> bool:
         if not self.embedding_model or not chunks:
             return False
         
         try:
-            texts = [chunk.content for chunk in chunks]
-            
-            embeddings = self.embedding_model.encode(texts, show_progress_bar=True)
-            
             if tenant_id not in self.tenant_indices:
                 self.tenant_indices[tenant_id] = faiss.IndexFlatIP(self.vector_dim)
                 self.tenant_metadata[tenant_id] = []
+            
+            if clear_all:
+                self.tenant_indices[tenant_id] = faiss.IndexFlatIP(self.vector_dim)
+                self.tenant_metadata[tenant_id] = []
+            elif replace_existing and chunks:
+                filename = chunks[0].source
+                self._remove_documents_by_filename(filename, tenant_id)
+            
+            texts = [chunk.content for chunk in chunks]
+            embeddings = self.embedding_model.encode(texts, show_progress_bar=True)
             
             self.tenant_indices[tenant_id].add(embeddings.astype('float32'))
             
@@ -66,7 +72,6 @@ class VectorStore:
             return True
             
         except Exception as e:
-            print(f"Error adding documents: {e}")
             return False
     
     def search(self, 
@@ -106,7 +111,6 @@ class VectorStore:
             return results
             
         except Exception as e:
-            print(f"Error searching: {e}")
             return []
     
     def hybrid_search(self,
@@ -188,10 +192,8 @@ class VectorStore:
                 else:
                     self.tenant_metadata[tenant_id] = []
                 
-                print(f"Loaded index for tenant: {tenant_id}")
-                
             except Exception as e:
-                print(f"Error loading index for tenant {tenant_id}: {e}")
+                pass
     
     def _save_tenant_index(self, tenant_id: str):
         try:
@@ -203,7 +205,63 @@ class VectorStore:
                 json.dump(self.tenant_metadata[tenant_id], f, ensure_ascii=False, indent=2)
             
         except Exception as e:
-            print(f"Error saving tenant index: {e}")
+            pass
     
     def list_tenants(self) -> List[str]:
-        return list(self.tenant_indices.keys()) 
+        return list(self.tenant_indices.keys())
+    
+    def clear_all_documents(self, tenant_id: str = "default") -> bool:
+        try:
+            self.tenant_indices[tenant_id] = faiss.IndexFlatIP(self.vector_dim)
+            self.tenant_metadata[tenant_id] = []
+            self._save_tenant_index(tenant_id)
+            return True
+        except Exception as e:
+            return False
+    
+    def _remove_documents_by_filename(self, filename: str, tenant_id: str) -> bool:
+        try:
+            if tenant_id not in self.tenant_metadata:
+                return True
+            
+            original_count = len(self.tenant_metadata[tenant_id])
+            metadata_to_keep = []
+            indices_to_keep = []
+            
+            for idx, metadata in enumerate(self.tenant_metadata[tenant_id]):
+                if metadata.get("source") != filename:
+                    metadata_to_keep.append(metadata)
+                    indices_to_keep.append(idx)
+            
+            removed_count = original_count - len(metadata_to_keep)
+            
+            if removed_count == 0:
+                return True
+            
+            if len(indices_to_keep) == 0:
+                self.tenant_indices[tenant_id] = faiss.IndexFlatIP(self.vector_dim)
+                self.tenant_metadata[tenant_id] = []
+            else:
+                old_index = self.tenant_indices[tenant_id]
+                embeddings_to_keep = []
+                
+                for idx in indices_to_keep:
+                    try:
+                        vector = old_index.reconstruct(idx)
+                        embeddings_to_keep.append(vector)
+                    except Exception as e:
+                        continue
+                
+                new_index = faiss.IndexFlatIP(self.vector_dim)
+                if embeddings_to_keep:
+                    embeddings_array = np.array(embeddings_to_keep, dtype='float32')
+                    new_index.add(embeddings_array)
+                
+                self.tenant_indices[tenant_id] = new_index
+                self.tenant_metadata[tenant_id] = metadata_to_keep
+            
+            self._save_tenant_index(tenant_id)
+            return True
+            
+        except Exception as e:
+            return False 

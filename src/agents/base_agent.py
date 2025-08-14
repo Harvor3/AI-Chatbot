@@ -10,7 +10,7 @@ class BaseAgent(ABC):
         self.description = description
     
     @abstractmethod
-    async def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def process(self, message: str, context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         pass
     
     @abstractmethod

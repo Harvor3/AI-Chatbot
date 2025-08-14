@@ -25,7 +25,7 @@ class RAGRetriever:
                     "chunks_created": 0
                 }
             
-            success = self.vector_store.add_documents(chunks, tenant_id)
+            success = self.vector_store.add_documents(chunks, tenant_id, replace_existing=True, clear_all=True)
             
             if success:
                 return {

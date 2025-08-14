@@ -1,6 +1,7 @@
-# 🤖 Multi-Agent RAG Chatbot
+# 🤖 Multi-Agent RAG Chatbot with Google AI
 
-A powerful multi-agent chatbot system with RAG (Retrieval-Augmented Generation) capabilities.
+A powerful multi-agent chatbot system with RAG (Retrieval-Augmented Generation) capabilities, powered exclusively by Google's Gemini models.
+
 ## ✨ Features
 
 ### 🧠 Multi-Agent System
@@ -198,3 +199,5 @@ MIT License - see LICENSE file for details
 - [Streamlit Docs](https://docs.streamlit.io/)
 
 ---
+
+**Built with ❤️ using Google's Gemini AI and modern RAG techniques** 
