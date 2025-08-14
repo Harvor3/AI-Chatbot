@@ -1,8 +1,7 @@
 import asyncio
 from typing import Dict, Any, List, Optional, Tuple
 from langchain_core.language_models import BaseLanguageModel
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_google_vertexai import ChatVertexAI
+from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, START, END
 from typing_extensions import TypedDict
 
@@ -31,25 +30,13 @@ class AgentController:
     
     def _initialize_llm(self) -> BaseLanguageModel:
         try:
-            if config.GOOGLE_API_KEY:
-                return ChatGoogleGenerativeAI(
-                    model="gemini-1.5-flash",
-                    google_api_key=config.GOOGLE_API_KEY,
-                    temperature=0.7,
-                    streaming=False
-                )
-            elif config.GOOGLE_PROJECT_ID:
-                return ChatVertexAI(
-                    model_name="gemini-1.5-flash",
-                    project=config.GOOGLE_PROJECT_ID,
-                    location=config.GOOGLE_LOCATION,
-                    temperature=0.7,
-                    streaming=False
-                )
-            else:
-                raise ValueError("Google AI API key or Google Cloud Project ID must be provided")
+            return ChatOpenAI(
+                model="gpt-3.5-turbo",
+                openai_api_key=config.OPENAI_API_KEY,
+                temperature=0.7
+            )
         except Exception as e:
-            raise RuntimeError(f"Failed to initialize LLM: {str(e)}")
+            raise RuntimeError(f"Failed to initialize OpenAI LLM: {str(e)}")
     
     def _initialize_agents(self) -> List[BaseAgent]:
         return [

@@ -1,6 +1,6 @@
-# 🤖 Multi-Agent RAG Chatbot with Google AI
+# 🤖 Multi-Agent RAG Chatbot with OpenAI
 
-A powerful multi-agent chatbot system with RAG (Retrieval-Augmented Generation) capabilities, powered exclusively by Google's Gemini models.
+A powerful multi-agent chatbot system with RAG (Retrieval-Augmented Generation) capabilities, powered by OpenAI's GPT models.
 
 ## ✨ Features
 
@@ -16,10 +16,10 @@ A powerful multi-agent chatbot system with RAG (Retrieval-Augmented Generation) 
 - **Multi-Tenant** - Isolated document collections
 - **Hybrid Search** - Semantic + keyword matching
 
-### 🚀 Google AI Powered
-- **Gemini 1.5 Flash** - Fast, efficient, and FREE
-- **Large Context** - 1M token context window
-- **No API Costs** - Free tier with 15 requests/minute
+### 🚀 OpenAI Powered
+- **GPT-3.5-Turbo** - Reliable and efficient
+- **Proven Performance** - Industry-standard GPT models
+- **Flexible Pricing** - Pay-per-use with various tiers
 - **Multimodal** - Text and image understanding
 
 ## 🚀 Quick Start
@@ -35,16 +35,16 @@ cd multi-agent-rag-chatbot
 pip install -r requirements.txt
 ```
 
-### 3. Get Google AI API Key
-1. Visit [Google AI Studio](https://aistudio.google.com/)
-2. Sign in with Google account
-3. Click "Get API Key"
-4. Generate API key (starts with `AIza...`)
+### 3. Get OpenAI API Key
+1. Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Sign in to your OpenAI account
+3. Click "Create new secret key"
+4. Generate API key (starts with `sk-...`)
 
 ### 4. Configure Environment
 Create `.env` file:
 ```bash
-GOOGLE_API_KEY=AIza_your_actual_api_key_here
+OPENAI_API_KEY=sk-your_actual_api_key_here
 ```
 
 ### 5. Run Application
@@ -57,7 +57,7 @@ Visit http://localhost:8501 to use the chatbot!
 ## 📋 System Requirements
 
 - Python 3.8+
-- Google AI API key (free)
+- OpenAI API key
 - 4GB+ RAM (for vector operations)
 
 ## 🏗️ Architecture
@@ -65,7 +65,7 @@ Visit http://localhost:8501 to use the chatbot!
 ```
 User Input → Agent Controller → LangGraph Router → Specialized Agents
      ↓              ↓                ↓               ↓
- Streamlit UI → Google Gemini → RAG System → Vector Store (FAISS)
+ Streamlit UI → OpenAI GPT → RAG System → Vector Store (FAISS)
 ```
 
 ### Core Components
@@ -90,16 +90,12 @@ User Input → Agent Controller → LangGraph Router → Specialized Agents
 
 ## 🔧 Configuration Options
 
-### Google AI Studio (Recommended)
+### OpenAI API Key
 ```bash
-GOOGLE_API_KEY=your_google_ai_key
+OPENAI_API_KEY=your_openai_api_key
 ```
 
-### Google Cloud Vertex AI (Enterprise)
-```bash
-GOOGLE_PROJECT_ID=your-project-id
-GOOGLE_LOCATION=us-central1
-```
+
 
 ### Optional Settings
 ```bash
@@ -124,27 +120,27 @@ Ask: "Create a contact form with validation"
 ### Data Analytics
 Upload CSV and ask: "Analyze trends in this data"
 
-## 🎯 Why Google AI?
+## 🎯 Why OpenAI?
 
 | Advantage | Benefit |
 |-----------|---------|
-| **💰 Free Tier** | No credit card required |
-| **⚡ Fast** | Optimized for speed |
-| **📚 Large Context** | 1M tokens vs competitors' 16K-200K |
-| **🔓 Open** | No vendor lock-in |
-| **🧠 Advanced** | State-of-the-art language model |
+| **🏆 Industry Standard** | Proven performance across industries |
+| **⚡ Fast** | Optimized for speed and reliability |
+| **📚 Large Context** | Handle complex documents efficiently |
+| **🔓 Flexible** | Multiple model options available |
+| **🧠 Advanced** | GPT-3.5-Turbo and GPT-4 capabilities |
 
 ## 🔧 Troubleshooting
 
-### "Google AI not configured"
+### "OpenAI not configured"
 - Check your `.env` file exists
-- Verify API key starts with `AIza`
+- Verify API key starts with `sk-`
 - Restart the application
 
-### "Quota exceeded"
-- Free tier limit: 15 requests/minute
-- Wait a minute and try again
-- Consider Vertex AI for higher limits
+### "Rate limit exceeded"
+- Check your OpenAI usage limits
+- Wait for rate limit reset
+- Consider upgrading your OpenAI plan
 
 ### RAG not working
 - Ensure documents are uploaded
@@ -168,13 +164,13 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 ```
 
 ### Cloud Deployment
-- **Google Cloud Run** - Recommended for Vertex AI
+- **Cloud Platforms** - AWS, GCP, Azure compatible
 - **Heroku** - Easy deployment
 - **AWS/Azure** - Enterprise options
 
 ## 📈 Performance
 
-- **Response Time** - < 2 seconds with Gemini Flash
+- **Response Time** - < 2 seconds with GPT-3.5-Turbo
 - **Document Processing** - 1000+ pages/minute
 - **Concurrent Users** - 10+ (depends on hosting)
 - **Vector Search** - Sub-second retrieval
@@ -184,7 +180,7 @@ CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0
 1. Fork the repository
 2. Create feature branch
 3. Make changes
-4. Test with Google AI
+4. Test with OpenAI
 5. Submit pull request
 
 ## 📄 License
@@ -193,11 +189,11 @@ MIT License - see LICENSE file for details
 
 ## 🔗 Links
 
-- [Google AI Studio](https://aistudio.google.com/)
-- [Gemini API Docs](https://ai.google.dev/docs)
+- [OpenAI Platform](https://platform.openai.com/)
+- [OpenAI API Docs](https://platform.openai.com/docs)
 - [LangChain Documentation](https://python.langchain.com/)
 - [Streamlit Docs](https://docs.streamlit.io/)
 
 ---
 
-**Built with ❤️ using Google's Gemini AI and modern RAG techniques** 
+**Built with ❤️ using OpenAI's GPT models and modern RAG techniques** 

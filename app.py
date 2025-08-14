@@ -69,7 +69,7 @@ def process_user_message_with_context(message: str, context: Dict[str, Any]) -> 
 
 def main():
     st.title("🤖 Multi-Agent RAG Chatbot")
-    st.markdown("*Powered by Google AI, LangChain, LangGraph, and RAG*")
+    st.markdown("*Powered by OpenAI, LangChain, LangGraph, and RAG*")
     
     st.info("🧠 **4 Specialized AI Agents** ready to help with documents, APIs, forms, and analytics!")
     
@@ -87,25 +87,21 @@ def main():
         if tenant_id != "default":
             st.info(f"📊 Active Tenant: {tenant_id}")
         
-        st.subheader("🤖 Google AI Status")
+        st.subheader("🤖 OpenAI Status")
         
-        if config.GOOGLE_API_KEY:
-            st.success("✅ Google AI API Key configured")
-            st.info("🚀 Using Gemini 1.5 Flash model")
-            st.caption("Free tier: 15 requests/minute")
-        elif config.GOOGLE_PROJECT_ID:
-            st.success("✅ Google Cloud Vertex AI configured")
-            st.info("🏢 Using Vertex AI Gemini model")
-            st.caption(f"Project: {config.GOOGLE_PROJECT_ID}")
+        if config.OPENAI_API_KEY:
+            st.success("✅ OpenAI API Key configured")
+            st.info("🚀 Using GPT-3.5-Turbo model")
+            st.caption("Rate limits apply based on your plan")
         else:
-            st.error("❌ Google AI not configured!")
-            st.warning("⚠️ This system requires Google AI to function")
-            st.info("Get your FREE API key from Google AI Studio:")
+            st.error("❌ OpenAI not configured!")
+            st.warning("⚠️ This system requires OpenAI to function")
+            st.info("Get your OpenAI API key:")
             st.code("""
 Add to your .env file:
-GOOGLE_API_KEY=your_google_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 
-Get your free key at: https://aistudio.google.com/
+Get your API key at: https://platform.openai.com/api-keys
             """)
         
         st.subheader("LangSmith Tracing")

@@ -5,9 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
-    GOOGLE_PROJECT_ID: Optional[str] = os.getenv("GOOGLE_PROJECT_ID")
-    GOOGLE_LOCATION: str = os.getenv("GOOGLE_LOCATION", "us-central1")
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
     
     LANGCHAIN_TRACING_V2: bool = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
     LANGCHAIN_ENDPOINT: str = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
@@ -19,8 +17,8 @@ class Config:
     
     @classmethod
     def validate(cls) -> bool:
-        if not cls.GOOGLE_API_KEY and not cls.GOOGLE_PROJECT_ID:
-            raise ValueError("Google AI API key or Google Cloud Project ID must be provided")
+        if not cls.OPENAI_API_KEY:
+            raise ValueError("OpenAI API key must be provided")
         return True
 
 config = Config() 
