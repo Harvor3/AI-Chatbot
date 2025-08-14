@@ -1,12 +1,8 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -53,17 +49,17 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
+# Django stuff
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+# Flask stuff
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy stuff
 .scrapy
 
 # Sphinx documentation
@@ -138,187 +134,135 @@ cython_debug/
 # PyCharm
 .idea/
 
-# VS Code
-.vscode/
+# Streamlit
+.streamlit/
 
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-*.stackdump
-[Dd]esktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msix
-*.msm
-*.msp
-*.lnk
-
-# Linux
-*~
-
-# Application specific
-data/
-logs/
-*.log
-temp/
-tmp/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Vector database files
-*.index
-*.faiss
-chroma_db/
+# RAG System Files
 vector_store/
+*.faiss
+*_index.faiss
+*_metadata.json
 
-# Uploaded files
-uploads/
-documents/
-files/
-
-# Model files
+# Machine Learning Models
 models/
 *.pkl
-*.pickle
 *.joblib
-
-# API keys and secrets
-.env.local
-.env.production
-.env.staging
-secrets.json
-config.json
-
-# Docker
-.dockerignore
-
-# Node.js (for MCP servers)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.npm
-.yarn-integrity
-
-# Backup files
-*.bak
-*.backup
-*.old
-*.orig
-
-# OS generated files
-.DS_Store?
-Icon?
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP share
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
-# JetBrains IDEs
-.idea/
-*.iws
-*.iml
-*.ipr
-out/
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Vim
-[._]*.s[a-v][a-z]
-[._]*.sw[a-p]
-[._]s[a-rt-v][a-z]
-[._]ss[a-gi-z]
-[._]sw[a-p]
-Session.vim
-Sessionx.vim
-.netrwhist
-*~
-tags
-[._]*.un~
-
-# AI/ML specific
 *.h5
 *.hdf5
 *.pb
 *.onnx
-*.tflite
-*.pt
-*.pth
-checkpoints/
-runs/
-wandb/
 
-# Jupyter
-.ipynb_checkpoints/
+# Sentence Transformers Cache
+sentence_transformers/
+.cache/
 
-# FastAPI specific
-*.pid
+# Hugging Face Cache
+.huggingface/
+transformers_cache/
 
-# Alembic
-alembic/versions/*.py
-!alembic/versions/
+# FAISS Index Files
+*.index
 
-# Redis dump
-dump.rdb
+# Document Processing
+temp_docs/
+uploaded_files/
+processed_docs/
 
-# Celery
-celerybeat-schedule.*
+# Logs
+logs/
+*.log
+*.out
 
-# Coverage reports
-htmlcov/
-.coverage
-coverage.xml
+# API Keys and Secrets
+config.env
+.env.local
+.env.production
+secrets.json
+api_keys.txt
 
-# Pytest
-.pytest_cache/
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
 
-# MCP servers data
-mcp_servers.json
-mcp_data/
+# IDE Files
+.vscode/
+*.swp
+*.swo
+*~
 
-# Analytics data
-analytics/
-reports/
-metrics/
+# Backup Files
+*.bak
+*.backup
+*.tmp
 
-# Markdown files (except README.md)
-*.md
-!README.md 
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary Files
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Node.js (if using any JS tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Streamlit specific
+.streamlit/config.toml
+.streamlit/credentials.toml
+
+# Test Files
+test_*.py
+*_test.py
+tests/
+test_results/
+
+# Data Files
+data/
+datasets/
+*.csv
+*.xlsx
+*.json
+*.xml
+*.parquet
+
+# Documentation Build
+_build/
+_static/
+_templates/
+
+# Compiled files
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Large files that shouldn't be committed
+*.pdf
+*.docx
+*.doc
+*.pptx
+*.ppt 
