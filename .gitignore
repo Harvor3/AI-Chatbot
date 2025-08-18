@@ -143,6 +143,9 @@ vector_store/
 *_index.faiss
 *_metadata.json
 
+# Tenant Storage
+tenant_storage/
+
 # Machine Learning Models
 models/
 *.pkl

@@ -72,9 +72,20 @@ class DocumentProcessor:
                         "page": page_num
                     })
             
-            return pages_content
+            if pages_content:
+                return pages_content
+            else:
+                return [{"content": "PDF processed but no text content could be extracted. This may be an image-based PDF or contain non-text elements.", "page": 1}]
+                
         except Exception as e:
-            return [{"content": f"Error extracting PDF content: {str(e)}", "page": 1}]
+            try:
+                content_str = file_content.decode('utf-8', errors='ignore')
+                if len(content_str.strip()) > 10:
+                    return [{"content": f"PDF extraction failed, but found text content: {content_str}", "page": 1}]
+            except:
+                pass
+            
+            return [{"content": f"Unable to process PDF file '{filename}'. Please ensure it's a valid PDF with extractable text content.", "page": 1}]
     
     def _extract_text_content(self, file_content: bytes, filename: str) -> List[Dict[str, Any]]:
         try:

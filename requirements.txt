@@ -28,6 +28,9 @@ python-docx
 pandas
 openpyxl
 
+# Form generation and export
+reportlab
+
 # Optional: Development tools
 # pytest
 # black 

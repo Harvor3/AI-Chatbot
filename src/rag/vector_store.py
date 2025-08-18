@@ -100,7 +100,7 @@ class VectorStore:
                     }
                     
                     if metadata_filter:
-                        if self._matches_filter(result["metadata"], metadata_filter):
+                        if self._matches_filter(result, metadata_filter):
                             results.append(result)
                     else:
                         results.append(result)
@@ -173,8 +173,15 @@ class VectorStore:
     
     def _matches_filter(self, metadata: Dict[str, Any], filter_dict: Dict[str, Any]) -> bool:
         for key, value in filter_dict.items():
-            if key not in metadata or metadata[key] != value:
+            if key not in metadata:
                 return False
+            
+            if isinstance(value, list):
+                if metadata[key] not in value:
+                    return False
+            else:
+                if metadata[key] != value:
+                    return False
         return True
     
     def _load_indices(self):

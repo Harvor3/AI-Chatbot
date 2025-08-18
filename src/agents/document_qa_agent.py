@@ -46,21 +46,26 @@ class DocumentQAAgent(BaseAgent):
         ])
         
         self.rag_prompt = ChatPromptTemplate.from_messages([
-            ("system", """You are a specialized document Q&A assistant. You MUST ONLY use the provided context from documents to answer questions.
+            ("system", """You are a specialized document Q&A assistant. Use the provided context from documents to answer questions accurately.
 
-            STRICT INSTRUCTIONS:
-            1. ONLY use information from the provided context below - DO NOT use any external knowledge
-            2. If the context doesn't contain the answer, say "The provided documents don't contain information about this topic"
+            INSTRUCTIONS:
+            1. Use the provided context from documents as your primary source
+            2. If the context contains relevant information, provide a comprehensive and helpful answer
             3. Always cite the specific source document and page when referencing information
-            4. Provide direct quotes from the context when possible
-            5. Be accurate and concise in your response
+            4. If the context is incomplete but contains some relevant information, provide what you can
+            5. Only if the context contains no relevant information, clearly state that the information is not available in the provided documents
+            6. Be accurate, helpful, and detailed in your responses
+            7. IMPORTANT: Use the conversation history to understand follow-up questions and maintain context continuity
             
             Context from documents:
             {context}
             
             Available sources: {sources}
             
-            REMEMBER: Answer ONLY based on the context provided above. Do not use general knowledge."""),
+            Conversation History (for context):
+            {conversation_history}
+            
+            Provide the best possible answer based on the available context and conversation history."""),
             ("human", "Question: {question}")
         ])
     
@@ -81,6 +86,54 @@ class DocumentQAAgent(BaseAgent):
                 "confidence": 0.0,
                 "error": str(e)
             }
+    
+    def _extract_document_names(self, message: str, tenant_id: str) -> Optional[List[str]]:
+        available_docs = self.rag_retriever.get_available_documents(tenant_id)
+        if not available_docs:
+            return None
+        
+        mentioned_docs = []
+        message_lower = message.lower()
+        
+        # Check for ordinal references (first, second, third, etc.)
+        ordinal_patterns = {
+            'first': 0, '1st': 0, 'one': 0,
+            'second': 1, '2nd': 1, 'two': 2,
+            'third': 2, '3rd': 2, 'three': 2,
+            'fourth': 3, '4th': 3, 'four': 3,
+            'fifth': 4, '5th': 4, 'five': 4,
+            'last': -1, 'final': -1
+        }
+        
+        for pattern, index in ordinal_patterns.items():
+            if pattern in message_lower and ('doc' in message_lower or 'file' in message_lower or 'pdf' in message_lower):
+                try:
+                    if index == -1:
+                        mentioned_docs.append(available_docs[-1])
+                    elif index < len(available_docs):
+                        mentioned_docs.append(available_docs[index])
+                except IndexError:
+                    pass
+        
+        # Check for explicit document names
+        for doc in available_docs:
+            doc_name_lower = doc.lower()
+            doc_base = doc_name_lower.split('.')[0] if '.' in doc_name_lower else doc_name_lower
+            
+            # Check for full name or base name
+            if doc_name_lower in message_lower or doc_base in message_lower:
+                if doc not in mentioned_docs:
+                    mentioned_docs.append(doc)
+            
+            # Check for partial matches (at least 3 characters)
+            if len(doc_base) >= 3:
+                words = doc_base.replace('_', ' ').replace('-', ' ').split()
+                for word in words:
+                    if len(word) >= 3 and word.lower() in message_lower:
+                        if doc not in mentioned_docs:
+                            mentioned_docs.append(doc)
+        
+        return mentioned_docs if mentioned_docs else None
     
     def _process_with_rag(self, message: str, context: Dict[str, Any], 
                                tenant_id: str, uploaded_files: List[Dict]) -> Dict[str, Any]:
@@ -108,9 +161,16 @@ class DocumentQAAgent(BaseAgent):
                         if result['success']:
                             newly_added.append(file_info['name'])
             
-            rag_context = self.rag_retriever.retrieve_context(
-                message, tenant_id, k=5, use_hybrid=True
-            )
+            document_names = self._extract_document_names(message, tenant_id)
+            
+            if document_names:
+                rag_context = self.rag_retriever.retrieve_context_from_documents(
+                    message, document_names, tenant_id, k=5, use_hybrid=True
+                )
+            else:
+                rag_context = self.rag_retriever.retrieve_context(
+                    message, tenant_id, k=5, use_hybrid=True
+                )
             
             if rag_context['chunks_found'] > 0:
                 sources_info = []
@@ -121,10 +181,26 @@ class DocumentQAAgent(BaseAgent):
                 
                 chain = self.rag_prompt | self.llm
                 
+                # Format conversation history for context
+                conversation_history = ""
+                if context and "conversation_history" in context:
+                    history_items = context["conversation_history"]
+                    if history_items:
+                        history_lines = []
+                        for msg in history_items[-6:]:  # Last 6 messages for context
+                            role = "User" if msg["role"] == "user" else "Assistant"
+                            history_lines.append(f"{role}: {msg['content']}")
+                        conversation_history = "\n".join(history_lines)
+                    else:
+                        conversation_history = "No previous conversation."
+                else:
+                    conversation_history = "No previous conversation."
+
                 response = chain.invoke({
                     "context": rag_context['context'],
                     "sources": sources_text,
-                    "question": message
+                    "question": message,
+                    "conversation_history": conversation_history
                 })
                 
                 return {
@@ -261,6 +337,24 @@ Please upload your documents and try again!"""
         if uploaded_files:
             return 0.9
         
+        # Check if this is a follow-up question based on conversation history
+        conversation_history = context.get("conversation_history", []) if context else []
+        is_followup = False
+        if conversation_history:
+            # Check if previous messages were about documents
+            recent_messages = conversation_history[-4:]  # Last 4 messages
+            for msg in recent_messages:
+                if msg["role"] == "assistant" and any(keyword in msg["content"].lower() for keyword in document_keywords):
+                    is_followup = True
+                    break
+        
+        # Follow-up question indicators
+        followup_phrases = [
+            "more details", "further details", "tell me more", "elaborate", "expand on",
+            "what about", "how about", "also", "additionally", "furthermore", "besides",
+            "can you explain", "what else", "any other", "continue", "go on"
+        ]
+        
         keyword_matches = sum(1 for keyword in document_keywords if keyword in message_lower)
         confidence = min(keyword_matches * 0.2, 0.8)
         
@@ -270,4 +364,12 @@ Please upload your documents and try again!"""
         if re.search(r'\b(this|the)\s+(document|file|pdf|paper)\b', message_lower):
             confidence += 0.2
         
-        return min(confidence, 1.0) if confidence > 0.3 else 0.1 
+        # Boost confidence for follow-up questions if previous context was about documents
+        if is_followup and any(phrase in message_lower for phrase in followup_phrases):
+            confidence += 0.3
+        
+        # Handle implicit references (it, that, them, etc.) in follow-ups
+        if is_followup and any(word in message_lower for word in ["it", "that", "them", "those", "these"]):
+            confidence += 0.2
+        
+        return min(confidence, 1.0) if confidence > 0.2 else 0.1 

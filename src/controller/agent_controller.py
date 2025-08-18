@@ -123,12 +123,36 @@ class AgentController:
             fallback_prompt = ChatPromptTemplate.from_messages([
                 ("system", """You are a helpful AI assistant. The user's query couldn't be handled by any specialized agent, 
                 so provide a general response. Be helpful and suggest how they might rephrase their question or 
-                what specific information they might need to provide."""),
+                what specific information they might need to provide.
+                
+                Use the conversation history to understand the context and provide more relevant responses.
+                
+                Conversation History:
+                {conversation_history}"""),
                 ("human", "{message}")
             ])
             
+            # Format conversation history
+            context = state.get("context", {})
+            conversation_history = ""
+            if context and "conversation_history" in context:
+                history_items = context["conversation_history"]
+                if history_items:
+                    history_lines = []
+                    for msg in history_items[-4:]:  # Last 4 messages for context
+                        role = "User" if msg["role"] == "user" else "Assistant"
+                        history_lines.append(f"{role}: {msg['content']}")
+                    conversation_history = "\n".join(history_lines)
+                else:
+                    conversation_history = "No previous conversation."
+            else:
+                conversation_history = "No previous conversation."
+            
             chain = fallback_prompt | self.llm
-            response = chain.invoke({"message": state["message"]})
+            response = chain.invoke({
+                "message": state["message"],
+                "conversation_history": conversation_history
+            })
             
             result = {
                 "response": response.content if hasattr(response, 'content') else str(response),
